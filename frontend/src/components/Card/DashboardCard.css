@@ -1,0 +1,88 @@
+/* Global page layout */
+.dashboard-container {
+    padding: 30px;
+    font-family: "Segoe UI", Arial, sans-serif;
+  }
+  
+  .dashboard-container h1 {
+    text-align: center;
+    margin-bottom: 25px;
+    font-size: 26px;
+    font-weight: 600;
+  }
+  
+  /* Cards grid (4 cards side-by-side) */
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 25px;
+  }
+  
+  /* Base card styling */
+  .card {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    padding: 0;
+    overflow: hidden;
+    text-align: center;
+    min-height: 220px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  
+  /* Blue title area like the screenshot */
+  .card h3 {
+    background: #3a8fff;
+    color: white;
+    margin: 0;
+    padding: 12px 0;
+    font-size: 18px;
+    font-weight: 600;
+  }
+  
+  /* Card content */
+  .card h2 {
+    margin-top: 18px;
+    font-size: 32px;
+    font-weight: bold;
+  }
+  
+  .card p {
+    margin: 5px 0 10px;
+    color: #666;
+    font-size: 14px;
+  }
+  
+  /* Buttons like the screenshot (blue rounded button) */
+  .card button {
+    background: #3a8fff;
+    color: white;
+    padding: 10px 14px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    margin-bottom: 15px;
+    font-size: 14px;
+    transition: 0.2s ease;
+  }
+  
+  .card button:hover {
+    background: #1f6fe0;
+  }
+  
+  /* Inputs in Manual Test card */
+  .card input {
+    width: 80%;
+    margin: 8px auto;
+    padding: 7px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+  }
+  
+  label {
+    font-size: 14px;
+    margin-top: 8px;
+  }
+  
