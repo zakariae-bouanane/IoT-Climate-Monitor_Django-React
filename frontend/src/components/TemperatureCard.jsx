@@ -11,8 +11,8 @@ export default function TemperatureCard() {
 
     useEffect(() => {
         const load = async () => {
-        const data = await fetchMeasurements();
-        setLatest(data[data.length - 1]);
+            const data = await fetchMeasurements();
+            setLatest(data[data.length - 1]);
         };
 
         load();
