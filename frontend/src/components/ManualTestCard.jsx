@@ -1,14 +1,22 @@
 // components/ManualTestCard.jsx
 import DashboardCard from "./Card/DashboardCard";
 import { useState } from "react";
+import { createMeasurement } from "../api/sensorApi";
 
 export default function ManualTestCard() {
     const [temp, setTemp] = useState("");
     const [hum, setHum] = useState("");
 
-    const handleSubmit = () => {
-        console.log("Sending:", { temp, hum });
-        // Call API here
+    const handleSubmit = async () => {
+        const data = {
+            temperature: temp,
+            humidity: hum
+        }
+    try {
+      const newMeasurement = await createMeasurement(data);
+    } catch (err) {
+      console.error("Erreur lors de l'envoi :", err);
+    }
     };
 
     return (

@@ -1,31 +1,37 @@
 // components/IncidentsCard.jsx
 import { useEffect, useState } from "react";
-import { fetchMeasurements } from "../api/sensorApi";
+import { fetchMeasurements, fetchFirstSensor } from "../api/sensorApi";
 import DashboardCard from "./Card/DashboardCard";
 import { useNavigate } from "react-router-dom";
 
 export default function IncidentsCard() {
     const [latest, setLatest] = useState(null);
     const [isIncident, setIsIncident] = useState(false);
+    const [MIN_TEMP, setMIN_TEMP] = useState(2);
+    const [MAX_TEMP, setMAX_TEMP] = useState(31);
     const navigate = useNavigate();
-
-    const MIN_TEMP = 2;
-    const MAX_TEMP = 31;
 
     useEffect(() => {
         const load = async () => {
-        const data = await fetchMeasurements();
-        const last = data[data.length - 1];
+            const sensor = await fetchFirstSensor();
+            setMIN_TEMP(sensor.min_temp);
+            setMAX_TEMP(sensor.max_temp);
+            const data = await fetchMeasurements();
+            
+            if(data?.length){
+                const last = data[data.length - 1];
 
-        setLatest(last);
+                setLatest(last);
 
-        // Determine incident status
-        if (last.temperature < MIN_TEMP || last.temperature > MAX_TEMP) {
-            setIsIncident(true);
-        } else {
-            setIsIncident(false);
+                // Determine incident status
+                if (last.temperature < MIN_TEMP || last.temperature > MAX_TEMP) {
+                    setIsIncident(true);
+                } else {
+                    setIsIncident(false);
+                }
+            };
         }
-        };
+
 
         load();
     }, []);

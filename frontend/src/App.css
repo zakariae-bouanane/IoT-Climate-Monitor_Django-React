@@ -3,6 +3,16 @@
   padding: 30px;
   font-family: "Segoe UI", Arial, sans-serif;
 }
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.dashboard-actions {
+    display: flex;
+    gap: 10px;
+}
 
 .dashboard-container h1 {
   text-align: center;

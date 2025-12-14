@@ -1,0 +1,21 @@
+pip freeze > requirements.txt
+
+pip install requirements.txt
+
+-- creation d'un projet
+
+django-admin startproject projet .
+
+django-admin startapp DHT
+
+python manage.py runserver
+
+python manage.py runserver 10.9.11.248:8000
+
+creation de la BD: 
+
+python manage.py migrate
+
+python manage.py makemigrations
+
+python manage.py creatsuperuser
