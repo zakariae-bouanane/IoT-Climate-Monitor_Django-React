@@ -17,6 +17,7 @@ export default function IncidentsCard() {
             setMIN_TEMP(sensor.min_temp);
             setMAX_TEMP(sensor.max_temp);
             const data = await fetchMeasurements();
+            
             if(data?.length){
                 const last = data[data.length - 1];
 

@@ -7,6 +7,7 @@ import PrivateRoute from "./Security/private-route";
 import TemperatureHistory from "./pages/TemperatureHistory"; 
 import HumidityHistory from "./pages/HumidityHistory";
 import IncidentsHistory from "./pages/IncidentsHistory";
+import SensorManagement from "./pages/SensorManagement";
 import Users from "./pages/Users";
 
 export default function App() { 
@@ -32,12 +33,20 @@ export default function App() {
           } 
         />
         <Route 
-           path="/users"
+          path="/users"
           element={
             <PrivateRoute>
               <Users />
             </PrivateRoute>
           } 
+        />
+        <Route
+          path="/sensors"
+          element={
+              <PrivateRoute>
+                  <SensorManagement />
+              </PrivateRoute>
+          }
         />
         <Route path="/temperature/history" element={<TemperatureHistory />} />
         <Route path="/humidity/history" element={<HumidityHistory />} />

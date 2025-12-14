@@ -22,8 +22,8 @@ export default function Dashboard() {
     const role =
         currentUser?.profile?.role || currentUser?.role || null;
 
-    const canManageUsers =
-        role === "manager" || role === "supervisor";
+    const canManageUsers = role === "manager" || role === "supervisor";
+    const canManageSensors = role === "supervisor";
 
     return (
         <div className="dashboard-container">
@@ -37,6 +37,15 @@ export default function Dashboard() {
                             onClick={() => navigate("/users")}
                         >
                             Manage Users
+                        </button>
+                    )}
+
+                    {canManageSensors && (
+                        <button
+                            className="btn btn-secondary"
+                            onClick={() => navigate("/sensors")}
+                        >
+                            Manage Sensors
                         </button>
                     )}
 

@@ -15,6 +15,10 @@ class DHT11serialize(serializers.ModelSerializer) :
         fields ='__all__'
 
 class SensorSerializer(serializers.ModelSerializer):
+    user = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all()
+    )
+
     class Meta:
         model = Sensor
         fields = "__all__"
