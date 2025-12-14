@@ -7,12 +7,20 @@ import PrivateRoute from "./Security/private-route";
 import TemperatureHistory from "./pages/TemperatureHistory"; 
 import HumidityHistory from "./pages/HumidityHistory";
 import IncidentsHistory from "./pages/IncidentsHistory";
+import Users from "./pages/Users";
 
 export default function App() { 
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Dashboard />} />
+        <Route 
+          path="/" 
+          element={
+            <PrivateRoute>
+              <Dashboard />
+            </PrivateRoute>
+          }
+        />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route 
@@ -20,6 +28,14 @@ export default function App() {
           element={
             <PrivateRoute>
               <Dashboard />
+            </PrivateRoute>
+          } 
+        />
+        <Route 
+           path="/users"
+          element={
+            <PrivateRoute>
+              <Users />
             </PrivateRoute>
           } 
         />

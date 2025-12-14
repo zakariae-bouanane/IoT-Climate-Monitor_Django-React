@@ -8,14 +8,12 @@ export default function ManualTestCard() {
     const [hum, setHum] = useState("");
 
     const handleSubmit = async () => {
-        console.log("Sending:", { temp, hum });
         const data = {
             temperature: temp,
             humidity: hum
         }
     try {
       const newMeasurement = await createMeasurement(data);
-      console.log("Measurement créé :", newMeasurement);
     } catch (err) {
       console.error("Erreur lors de l'envoi :", err);
     }

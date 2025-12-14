@@ -6,15 +6,27 @@ from rest_framework.routers import DefaultRouter
 from django.urls import path,include
 from . import views, admin, api
 from .views import SensorViewSet, MeasurementViewSet, AuditLogViewSet
+from .views import UserViewSet
+from rest_framework_simplejwt.views import (
+    TokenObtainPairView,
+    TokenRefreshView,
+)
+from .views import CustomTokenObtainPairView, me, UserRetrieveUpdateView
 
 router = DefaultRouter()
 router.register(r"sensors", SensorViewSet, basename="sensors")
 router.register(r"mesures", MeasurementViewSet, basename="mesures")
 router.register(r"audit", AuditLogViewSet)
+router.register("users", UserViewSet, basename="users")
 
 urlpatterns = [
+    path("auth/login/", CustomTokenObtainPairView.as_view(), name="login"),
+    path("token/", TokenObtainPairView.as_view(), name="token"),
+    path("auth/me/", me, name="me"),
+    path("auth/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path('measurements/', measurement_list, name='measurements'),
     # path('api/', api.Dlist,name='json'),
-    path("measurements/", include(router.urls)),
+    path("", include(router.urls)),
+    path('users/<int:pk>/', UserRetrieveUpdateView.as_view(), name='user-detail'),
     path("latest/", views.latest_json, name="latest_json"),
 ]

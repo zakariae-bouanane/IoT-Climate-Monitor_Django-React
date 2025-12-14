@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { loginUser, saveToken } from "../api/authApi";
+import { loginUser } from "../api/authApi";
 import { useNavigate } from "react-router-dom";
 
 function Login() {
@@ -11,8 +11,6 @@ function Login() {
     e.preventDefault();
     try {
       const data = await loginUser({ username, password });
-      console.log("data : ",data);
-      saveToken(data.access); // sauvegarde le token
       navigate("/dashboard"); // redirige vers dashboard
     } catch (err) {
       console.error("Erreur login :", err);

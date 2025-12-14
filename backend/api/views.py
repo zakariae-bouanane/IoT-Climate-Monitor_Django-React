@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from .models import Measurement
 from .serializers import MeasurementSerializer
@@ -8,16 +8,24 @@ from django.http import HttpResponse
 # views.py
 from django.http import JsonResponse
 from .models import Dht11
-
+from django.contrib.auth.models import User
+from rest_framework.viewsets import ModelViewSet
 from rest_framework import viewsets, status
 from rest_framework.response import Response
-from .models import Sensor, Measurement
-from .serializers import SensorSerializer, MeasurementSerializer, AuditLogSerializer
+from .models import Sensor, Measurement, AuditLog
+from .serializers import SensorSerializer, MeasurementSerializer, AuditLogSerializer, UserSerializer
 from rest_framework.decorators import action
 from django.utils.dateparse import parse_datetime
 from django.utils import timezone
 from rest_framework.permissions import AllowAny, IsAuthenticated
-from .models import AuditLog
+from .permissions import IsManagerOrSupervisor
+from rest_framework_simplejwt.views import TokenObtainPairView
+from .serializers import CustomTokenObtainPairSerializer
+from django.shortcuts import get_object_or_404
+from .models import User
+from .serializers import UserSerializer
+from rest_framework import generics
+
 
 
 @api_view(['GET', 'POST'])
@@ -26,7 +34,7 @@ def measurement_list(request):
         data = Measurement.objects.all().order_by('created_at')
         serializer = MeasurementSerializer(data, many=True)
         return Response(serializer.data)
-    
+
     elif request.method == 'POST':
         serializer = MeasurementSerializer(data=request.data)
         if serializer.is_valid():
@@ -106,6 +114,62 @@ class AuditLogViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = AuditLog.objects.all().order_by("-created_at")
     serializer_class = AuditLogSerializer
     permission_classes = [IsAuthenticated]
+
+class UserViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all().order_by("id")
+    serializer_class = UserSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+
+        # Supervisor voit tout
+        if user.profile.role.lower() == "supervisor":
+            return User.objects.all().order_by("id")
+
+        # Manager voit ses users + lui-même
+        return User.objects.filter(profile__manager=user) | User.objects.filter(id=user.id)
+
+    def get_object(self):
+        """
+        Surcharge pour s'assurer que l'utilisateur ne peut accéder qu'à
+        ses users autorisés (selon get_queryset)
+        """
+        queryset = self.get_queryset()
+        obj = get_object_or_404(queryset, pk=self.kwargs.get('pk'))
+        return obj
+
+    def update(self, request, *args, **kwargs):
+        """
+        Permettre de mettre à jour un utilisateur selon les permissions
+        """
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        return Response(serializer.data)
+
+
+class UserRetrieveUpdateView(generics.RetrieveUpdateAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = [IsAuthenticated]
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def me(request):
+    user = request.user
+    profile = getattr(user, "profile", None)
+    return Response({
+        "id": user.id,
+        "username": user.username,
+        "email": user.email,
+        "role": profile.role if profile else None
+    })
 
 
 
