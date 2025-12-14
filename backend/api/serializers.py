@@ -88,7 +88,14 @@ class MeasurementSerializer(serializers.ModelSerializer):
             # 🔥 Envoi notifications (email + Telegram)
             # send_alert_notification(sensor, measurement)
             escalation_process(sensor, measurement)
+        else:
+            # Cas normal : température dans les limites
+            measurement.status = "NORMAL"
+            measurement.save()
 
+            if sensor.alert_count > 0:
+                sensor.alert_count = 0
+            sensor.save()
 
         return measurement
 

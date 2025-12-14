@@ -19,3 +19,7 @@ python manage.py migrate
 python manage.py makemigrations
 
 python manage.py creatsuperuser
+
+creation d'un utilisateur :
+
+python manage.py createsuperuser
