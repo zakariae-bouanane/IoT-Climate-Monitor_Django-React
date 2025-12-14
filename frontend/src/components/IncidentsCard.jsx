@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 
 export default function IncidentsCard() {
     const [latest, setLatest] = useState(null);
+    const [sensor, setSensor] = useState(null);
     const [isIncident, setIsIncident] = useState(false);
     const [MIN_TEMP, setMIN_TEMP] = useState(2);
     const [MAX_TEMP, setMAX_TEMP] = useState(31);
@@ -13,9 +14,10 @@ export default function IncidentsCard() {
 
     useEffect(() => {
         const load = async () => {
-            const sensor = await fetchFirstSensor();
-            setMIN_TEMP(sensor.min_temp);
-            setMAX_TEMP(sensor.max_temp);
+            const sensorData = await fetchFirstSensor();
+            setSensor(sensorData);
+            setMIN_TEMP(sensorData.min_temp);
+            setMAX_TEMP(sensorData.max_temp);
             const data = await fetchMeasurements();
             
             if(data?.length){
@@ -35,24 +37,24 @@ export default function IncidentsCard() {
 
         load();
     }, []);
-
+    
     return (
         <DashboardCard title="Incidents">
         {/* GREEN if no incident, RED if incident */}
         <p style={{ 
-            color: isIncident ? "red" : "green",
+            color: sensor?.alert_count > 0 ? "red" : "green",
             fontWeight: "600"
         }}>
-            {isIncident ? "Incident détecté" : "Pas d'incident"}
+            {sensor?.alert_count > 0 ? "Incident détecté" : "Pas d'incident"}
         </p>
 
         <p>Plage normale : {MIN_TEMP}°C à {MAX_TEMP}°C</p>
 
         {/* Display counter dynamically */}
         <p>
-            Compteur d'incidents :{" "}
+            Compteur d'incidents :
             <span style={{ fontWeight: "bold" }}>
-            {isIncident ? 1 : 0}
+            {sensor?.alert_count}
             </span>
         </p>
 
