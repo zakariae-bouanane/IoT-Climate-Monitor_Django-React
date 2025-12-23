@@ -25,6 +25,7 @@ urlpatterns = [
     path("auth/me/", me, name="me"),
     path("auth/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path('measurements/', measurement_list, name='measurements'),
+    path("audit/export/", views.export_audit_logs, name="export_audit_logs"),
     # path('api/', api.Dlist,name='json'),
     path("", include(router.urls)),
     path('users/<int:pk>/', UserRetrieveUpdateView.as_view(), name='user-detail'),

@@ -8,6 +8,7 @@ import TemperatureHistory from "./pages/TemperatureHistory";
 import HumidityHistory from "./pages/HumidityHistory";
 import IncidentsHistory from "./pages/IncidentsHistory";
 import SensorManagement from "./pages/SensorManagement";
+import AuditLogsHistory from "./pages/AuditLogsHistory";
 import Users from "./pages/Users";
 
 export default function App() { 
@@ -51,6 +52,7 @@ export default function App() {
         <Route path="/temperature/history" element={<TemperatureHistory />} />
         <Route path="/humidity/history" element={<HumidityHistory />} />
         <Route path="/incidents/history" element={<IncidentsHistory />} />
+        <Route path="/audit" element={<AuditLogsHistory />} />
       </Routes>
     </BrowserRouter>
   );

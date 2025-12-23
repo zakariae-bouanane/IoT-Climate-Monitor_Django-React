@@ -25,6 +25,9 @@ from django.shortcuts import get_object_or_404
 from .models import User
 from .serializers import UserSerializer
 from rest_framework import generics
+import csv
+from django.http import HttpResponse
+from rest_framework.decorators import api_view, permission_classes
 
 
 
@@ -171,5 +174,32 @@ def me(request):
         "role": profile.role if profile else None
     })
 
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def export_audit_logs(request):
+    response = HttpResponse(content_type="text/csv")
+    response["Content-Disposition"] = 'attachment; filename="audit_logs.csv"'
+
+    writer = csv.writer(response, delimiter=",")
+    writer.writerow([
+        "ID",
+        "Action",
+        "Sensor",
+        "Details",
+        "Created At"
+    ])
+
+    logs = AuditLog.objects.select_related("sensor").order_by("-created_at")
+
+    for log in logs:
+        writer.writerow([
+            log.id,
+            log.action,
+            log.sensor.name if log.sensor else "",
+            log.details,
+            log.created_at.strftime("%Y-%m-%d %H:%M:%S")
+        ])
+
+    return response
 
 

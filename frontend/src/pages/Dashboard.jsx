@@ -24,6 +24,7 @@ export default function Dashboard() {
 
     const canManageUsers = role === "manager" || role === "supervisor";
     const canManageSensors = role === "supervisor";
+    const canViewAuditLogs = role === "manager" || role === "supervisor";
 
     return (
   <div style={styles.container}>
@@ -43,6 +44,14 @@ export default function Dashboard() {
             onClick={() => navigate("/sensors")}
           >
             Manage Sensors
+          </button>
+        )}
+        {canViewAuditLogs && (
+          <button
+            style={styles.navButton}
+            onClick={() => navigate("/audit")}
+          >
+            Audit Logs
           </button>
         )}
       </div>
