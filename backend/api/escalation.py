@@ -82,17 +82,25 @@ def escalation_process(sensor, measurement):
         return
 
 def create_and_assign_ticket(sensor, assigned_user, priority="MEDIUM"):
-    ticket = Ticket.objects.create(
-        sensor=sensor,
-        assigned_to=assigned_user,
-        status="ASSIGNED",
-        priority=priority
-    )
+    try:
+        ticket = Ticket.objects.create(
+            sensor=sensor,
+            assigned_to=assigned_user,
+            status="ASSIGNED",
+            priority=priority
+        )
 
-    AuditLog.objects.create(
-        action="TICKET_CREATED",
-        sensor=sensor,
-        details=f"Ticket #{ticket.id} créé et assigné à {assigned_user.username}"
-    )
+        AuditLog.objects.create(
+            action="TICKET_CREATED",
+            sensor=sensor,
+            details=f"Ticket #{ticket.id} créé et assigné à {assigned_user.username}"
+        )
 
-    return ticket
+        print(f"✅ Ticket {ticket.id} créé")
+
+        return ticket
+
+    except Exception as e:
+        print("❌ ERREUR création ticket :", e)
+        return None
+

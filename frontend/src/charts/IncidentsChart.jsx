@@ -4,6 +4,7 @@ import { fetchMeasurements, fetchFirstSensor } from "../api/sensorApi";
 
 export default function IncidentsHistory() {
     const [incidents, setIncidents] = useState([]);
+    const [lastAlertId, setLastAlertId] = useState([]);
     const [MIN_TEMP, setMIN_TEMP] = useState(2);
     const [MAX_TEMP, setMAX_TEMP] = useState(31);
     const [currentPage, setCurrentPage] = useState(1);
@@ -27,6 +28,8 @@ export default function IncidentsHistory() {
                         : "Température trop élevée"
             }))
             .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+            setLastAlertId(detected.find(m => m.status === "ALERT")?.id);
 
             setIncidents(detected);
         };
@@ -65,6 +68,7 @@ export default function IncidentsHistory() {
                                 <th style={{ padding: 8 }}>Température (°C)</th>
                                 <th style={{ padding: 8 }}>Humidité (%)</th>
                                 <th style={{ padding: 8 }}>Date</th>
+                                <th style={{ padding: 8 }}>Danger</th>
                                 <th style={{ padding: 8 }}>Incident</th>
                             </tr>
                         </thead>
@@ -78,6 +82,13 @@ export default function IncidentsHistory() {
                                     <td style={{ padding: 8 }}>{m.humidity.toFixed(1)}</td>
                                     <td style={{ padding: 8 }}>
                                         {new Date(m.created_at).toLocaleString()}
+                                    </td>
+                                    <td style={{ padding: 8, textAlign: "center" }}>
+                                        {m.id === lastAlertId && m.sensor_alert_count > 6 ? (
+                                            <span title="Alerte critique">🚨</span>
+                                        ) : (
+                                            "-"
+                                        )}
                                     </td>
                                      <td style={{ padding: 8 }}>
                                         <button

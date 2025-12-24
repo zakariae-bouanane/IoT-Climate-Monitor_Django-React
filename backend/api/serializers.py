@@ -25,12 +25,35 @@ class SensorSerializer(serializers.ModelSerializer):
 
 class MeasurementSerializer(serializers.ModelSerializer):
     sensor_id = serializers.IntegerField(write_only=True, required=True)
+
     sensor = SensorSerializer(read_only=True)
+
+    # 🔥 NOUVEAU : alert_count du sensor
+    sensor_alert_count = serializers.IntegerField(
+        source="sensor.alert_count",
+        read_only=True
+    )
 
     class Meta:
         model = Measurement
-        fields = ["id", "sensor", "sensor_id", "temperature", "humidity", "timestamp", "status", "created_at"]
-        read_only_fields = ["id", "sensor", "status", "created_at"]
+        fields = [
+            "id",
+            "sensor",
+            "sensor_id",
+            "temperature",
+            "humidity",
+            "timestamp",
+            "status",
+            "created_at",
+            "sensor_alert_count",   # 👈 ajouté ici
+        ]
+        read_only_fields = [
+            "id",
+            "sensor",
+            "status",
+            "created_at",
+            "sensor_alert_count"
+        ]
 
     def validate_temperature(self, value):
         # Validation simple — ajustez selon cahier des charges

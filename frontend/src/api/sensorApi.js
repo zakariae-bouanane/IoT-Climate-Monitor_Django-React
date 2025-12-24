@@ -5,11 +5,11 @@ import { axiosInstance } from "./axiosInstance";
 
 const API_URL = `${process.env.REACT_APP_API_URL}/api`;
 
-// export async function fetchMeasurements() {
-//     const res = await axiosInstance.get(`${API_URL}/measurements/`);
+export async function fetchAllMeasurements() {
+    const res = await axiosInstance.get(`${API_URL}/measurements/`);
     
-//     return res.data;
-// }
+    return res.data; 
+}
 
 export async function fetchMeasurements(sensorId = 1) {
   try {
