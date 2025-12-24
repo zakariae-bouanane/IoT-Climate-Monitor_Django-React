@@ -86,7 +86,7 @@ export default function IncidentsHistory() {
                                                 border: "none",
                                                 borderRadius: 4,
                                                 color: "white",
-                                                backgroundColor: m.isIncident ? "red" : "green",
+                                                backgroundColor: m.status === 'ALERT' ? "red" : "green",
                                                 cursor: "default",
                                             }}
                                         >

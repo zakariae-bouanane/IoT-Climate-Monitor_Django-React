@@ -4,7 +4,7 @@ const API_URL = `${process.env.REACT_APP_API_URL}/api/users`;
 
 export const fetchUsers = async () => {
     const res = await axiosInstance.get(`${API_URL}/`);
-    return res.data;
+    return res.data.results;
 };
 
 export const createUser = async (data) => {

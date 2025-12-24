@@ -9,6 +9,7 @@ import HumidityHistory from "./pages/HumidityHistory";
 import IncidentsHistory from "./pages/IncidentsHistory";
 import SensorManagement from "./pages/SensorManagement";
 import AuditLogsHistory from "./pages/AuditLogsHistory";
+import Tickets from "./pages/Tickets";
 import Users from "./pages/Users";
 
 export default function App() { 
@@ -49,10 +50,19 @@ export default function App() {
               </PrivateRoute>
           }
         />
+        <Route
+          path="/tickets"
+          element={
+              <PrivateRoute>
+                  <Tickets />
+              </PrivateRoute>
+          }
+        />
         <Route path="/temperature/history" element={<TemperatureHistory />} />
         <Route path="/humidity/history" element={<HumidityHistory />} />
         <Route path="/incidents/history" element={<IncidentsHistory />} />
         <Route path="/audit" element={<AuditLogsHistory />} />
+        <Route path="*" element={<h2>404 - Page non trouvée</h2>} />
       </Routes>
     </BrowserRouter>
   );

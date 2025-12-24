@@ -11,13 +11,14 @@ from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
-from .views import CustomTokenObtainPairView, me, UserRetrieveUpdateView
+from .views import CustomTokenObtainPairView, me, UserRetrieveUpdateView, TicketViewSet
 
 router = DefaultRouter()
 router.register(r"sensors", SensorViewSet, basename="sensors")
 router.register(r"mesures", MeasurementViewSet, basename="mesures")
 router.register(r"audit", AuditLogViewSet)
 router.register("users", UserViewSet, basename="users")
+router.register(r'tickets', TicketViewSet)
 
 urlpatterns = [
     path("auth/login/", CustomTokenObtainPairView.as_view(), name="login"),

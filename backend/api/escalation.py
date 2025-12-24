@@ -1,4 +1,4 @@
-from .models import Sensor, Profile
+from .models import Sensor, Profile, Ticket, AuditLog
 from .utils import send_alert_email, send_alert_telegram
 from .audit import create_audit
 
@@ -44,12 +44,22 @@ def escalation_process(sensor, measurement):
     # 1️⃣ Étape 1 — 1ère alerte → notifier USER
     if sensor.alert_count <= 3:
         notify_user(responsible_user, sensor, measurement, "USER")
+        create_and_assign_ticket(
+            sensor=sensor,
+            assigned_user=responsible_user,
+            priority="LOW"
+        )
         return
 
     # 2️⃣ Étape 2 — 3 alertes → notifier MANAGER
     if sensor.alert_count > 3 and sensor.alert_count <= 6:
         if profile.manager:  # Le user a un manager dans Profile
             notify_user(profile.manager, sensor, measurement, "MANAGER")
+            create_and_assign_ticket(
+                sensor=sensor,
+                assigned_user=profile.manager,
+                priority="MEDIUM"
+            )
         else:
             print("⚠ Pas de manager → impossible d'escalader")
         return
@@ -62,6 +72,27 @@ def escalation_process(sensor, measurement):
         if manager_profile and manager_profile.manager:
             supervisor = manager_profile.manager
             notify_user(supervisor, sensor, measurement, "SUPERVISOR")
+            create_and_assign_ticket(
+                sensor=sensor,
+                assigned_user=supervisor,
+                priority="HIGH"
+            )
         else:
             print("⚠ Pas de supervisor → fin de l'escalade")
         return
+
+def create_and_assign_ticket(sensor, assigned_user, priority="MEDIUM"):
+    ticket = Ticket.objects.create(
+        sensor=sensor,
+        assigned_to=assigned_user,
+        status="ASSIGNED",
+        priority=priority
+    )
+
+    AuditLog.objects.create(
+        action="TICKET_CREATED",
+        sensor=sensor,
+        details=f"Ticket #{ticket.id} créé et assigné à {assigned_user.username}"
+    )
+
+    return ticket

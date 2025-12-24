@@ -12,30 +12,53 @@ from django.contrib.auth.models import User
 from rest_framework.viewsets import ModelViewSet
 from rest_framework import viewsets, status
 from rest_framework.response import Response
-from .models import Sensor, Measurement, AuditLog
-from .serializers import SensorSerializer, MeasurementSerializer, AuditLogSerializer, UserSerializer
-from rest_framework.decorators import action
+from .models import Sensor, Measurement, AuditLog, User, Ticket
+from .serializers import SensorSerializer, MeasurementSerializer, AuditLogSerializer, CustomTokenObtainPairSerializer, UserSerializer, TicketSerializer
+from rest_framework.decorators import action, api_view, permission_classes
 from django.utils.dateparse import parse_datetime
 from django.utils import timezone
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from .permissions import IsManagerOrSupervisor
 from rest_framework_simplejwt.views import TokenObtainPairView
-from .serializers import CustomTokenObtainPairSerializer
 from django.shortcuts import get_object_or_404
-from .models import User
-from .serializers import UserSerializer
 from rest_framework import generics
 import csv
 from django.http import HttpResponse
-from rest_framework.decorators import api_view, permission_classes
-
+from django.utils.timezone import now
 
 
 @api_view(['GET', 'POST'])
 def measurement_list(request):
     if request.method == 'GET':
-        data = Measurement.objects.all().order_by('created_at')
-        serializer = MeasurementSerializer(data, many=True)
+        sensor_id = request.query_params.get("sensor")
+        qs = Measurement.objects.all().select_related("sensor").order_by("timestamp")
+
+        if sensor_id:
+            qs = qs.filter(sensor__sensor_id=sensor_id)
+            try:
+                sensor = Sensor.objects.get(sensor_id=sensor_id)
+            except Sensor.DoesNotExist:
+                sensor = None
+        else:
+            sensor = None
+
+        # Gestion des alertes successives
+        if sensor and getattr(sensor, "alert_count", 0) > 0:
+            measurements = list(qs)
+            filtered = []
+            last_status = None
+            for m in measurements:
+                if m.status == "ALERT":
+                    if last_status != "ALERT":
+                        filtered.append(m)
+                else:  # OK/NORMAL
+                    filtered.append(m)
+                last_status = m.status
+
+            # Retour en ordre décroissant pour l'affichage
+            qs = Measurement.objects.filter(id__in=[m.id for m in filtered]).order_by("-timestamp")
+
+        serializer = MeasurementSerializer(qs, many=True)
         return Response(serializer.data)
 
     elif request.method == 'POST':
@@ -82,25 +105,41 @@ class MeasurementViewSet(viewsets.ModelViewSet):
     serializer_class = MeasurementSerializer
 
     def get_permissions(self):
-        if self.action == "create":  # capteur → POST /api/mesures/
+        if self.action == "create":
             return [AllowAny()]
         return [IsAuthenticated()]
 
     def get_queryset(self):
         qs = super().get_queryset()
-        sensor = self.request.query_params.get("sensor")
-        since = self.request.query_params.get("since")
-        if sensor:
-            qs = qs.filter(sensor__sensor_id=sensor)
-        if since:
+        sensor_id = self.request.query_params.get("sensor")
+
+        if sensor_id:
+            qs = qs.filter(sensor__sensor_id=sensor_id)
             try:
-                dt = parse_datetime(since)
-                if dt is None:
-                    raise ValueError()
-                qs = qs.filter(timestamp__gte=dt)
-            except Exception:
-                pass
-        return qs
+                sensor = Sensor.objects.get(sensor_id=sensor_id)
+            except Sensor.DoesNotExist:
+                sensor = None
+        else:
+            sensor = None
+
+        if sensor and getattr(sensor, "alert_count", 0) > 0:
+            # Parcours chronologique pour détecter correctement la première alerte de chaque série
+            measurements = list(qs.order_by("timestamp"))
+            filtered = []
+            last_status = None
+
+            for m in measurements:
+                if m.status == "ALERT":
+                    if last_status != "ALERT":
+                        filtered.append(m)  # Première alerte d’une série
+                else:  # OK/NORMAL
+                    filtered.append(m)
+                last_status = m.status
+
+            # Retour en QuerySet pour DRF, trié par timestamp décroissant
+            return qs.filter(id__in=[m.id for m in filtered]).order_by("-timestamp")
+
+        return qs.order_by("-timestamp")
 
     def create(self, request, *args, **kwargs):
         """
@@ -202,4 +241,46 @@ def export_audit_logs(request):
 
     return response
 
+class TicketViewSet(viewsets.ModelViewSet):
+    queryset = Ticket.objects.all().order_by('-created_at')
+    serializer_class = TicketSerializer
+
+    @action(detail=True, methods=['post'])
+    def assign(self, request, pk=None):
+        ticket = self.get_object()
+        user_id = request.data.get("user_id")
+
+        if not user_id:
+            return Response({"error": "user_id requis"}, status=400)
+
+        ticket.assigned_to_id = user_id
+        ticket.status = "ASSIGNED"
+        ticket.save()
+
+        AuditLog.objects.create(
+            action="TICKET_ASSIGNED",
+            sensor=ticket.sensor,
+            details=f"Ticket #{ticket.id} assigné manuellement"
+        )
+
+        return Response({"message": "Ticket assigné"})
+
+    @action(detail=True, methods=['post'])
+    def close(self, request, pk=None):
+        ticket = self.get_object()
+
+        if ticket.status == "CLOSED":
+            return Response({"message": "Déjà clôturé"}, status=400)
+
+        ticket.status = "CLOSED"
+        ticket.closed_at = now()
+        ticket.save()
+
+        AuditLog.objects.create(
+            action="TICKET_CLOSED",
+            sensor=ticket.sensor,
+            details=f"Ticket #{ticket.id} clôturé"
+        )
+
+        return Response({"message": "Ticket clôturé"})
 

@@ -87,3 +87,28 @@ class Profile(models.Model):
 
     def __str__(self):
         return f"{self.user.username} ({self.role})"
+
+
+class Ticket(models.Model):
+    STATUS_CHOICES = [
+        ("OPEN", "Open"),
+        ("ASSIGNED", "Assigned"),
+        ("CLOSED", "Closed"),
+    ]
+
+    sensor = models.ForeignKey(Sensor, on_delete=models.CASCADE)
+    created_by = models.ForeignKey(
+        User, null=True, blank=True,
+        on_delete=models.SET_NULL,
+        related_name="created_tickets"
+    )
+    assigned_to = models.ForeignKey(
+        User, null=True, blank=True,
+        on_delete=models.SET_NULL,
+        related_name="assigned_tickets"
+    )
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="OPEN")
+    priority = models.CharField(max_length=20, default="MEDIUM")
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    closed_at = models.DateTimeField(null=True, blank=True)

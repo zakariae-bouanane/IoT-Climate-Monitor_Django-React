@@ -6,7 +6,7 @@ from .utils import send_alert_notification
 from .audit import create_audit
 from .escalation import escalation_process
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from .models import Profile
+from .models import Profile, Ticket
 
 
 class DHT11serialize(serializers.ModelSerializer) :
@@ -45,8 +45,6 @@ class MeasurementSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         sensor_id = validated_data.pop("sensor_id")
-
-        # retirer timestamp de validated_data s’il existe
         timestamp = validated_data.pop("timestamp", None)
 
         # find or create sensor
@@ -59,45 +57,55 @@ class MeasurementSerializer(serializers.ModelSerializer):
         if timestamp is None:
             timestamp = timezone.now()
 
-        # now safe: timestamp won't appear twice
         measurement = Measurement.objects.create(
             sensor=sensor,
             timestamp=timestamp,
             **validated_data
         )
+
         create_audit(
             action="MEASUREMENT_RECEIVED",
             sensor=sensor,
             details=f"Temp={measurement.temperature}, Hum={measurement.humidity}"
         )
 
-        # simple alert detection
-        # if measurement.temp < 2 or measurement.temp > 8:
-        # Vérifier si alerte (dépasse seuils)
-        if (
-                measurement.temperature < sensor.min_temp or
-                measurement.temperature > sensor.max_temp
-        ):
+        # Vérification alerte
+        if measurement.temperature < sensor.min_temp or measurement.temperature > sensor.max_temp:
             measurement.status = "ALERT"
             measurement.save()
             create_audit(
                 action="ALERT_TRIGGERED",
                 sensor=sensor,
-                details=f"Temp={measurement.temperature} dépasse les seuils autorisés : en dehors des seuils [{sensor.min_temp} - {sensor.max_temp}]"
+                details=f"Temp={measurement.temperature} dépasse les seuils autorisés : [{sensor.min_temp} - {sensor.max_temp}]"
             )
-            # 🔥 Envoi notifications (email + Telegram)
-            # send_alert_notification(sensor, measurement)
+
+            # Notifications et escalade
             escalation_process(sensor, measurement)
+
+            # 🔥 Créer un ticket seulement s'il n'y en a pas déjà un ouvert pour ce sensor
+            existing_ticket = Ticket.objects.filter(
+                sensor=sensor,
+                status__in=["OPEN", "ASSIGNED"]
+            ).first()
+
+            if not existing_ticket:
+                Ticket.objects.create(
+                    title="Dépassement température",
+                    description=f"Température = {measurement.temperature}°C",
+                    sensor=sensor,
+                    priority="HIGH",
+                    status="OPEN"
+                )
+
         else:
-            # Cas normal : température dans les limites
             measurement.status = "NORMAL"
             measurement.save()
-
             if sensor.alert_count > 0:
                 sensor.alert_count = 0
             sensor.save()
 
         return measurement
+
 
 class AuditLogSerializer(serializers.ModelSerializer):
     class Meta:
@@ -198,3 +206,8 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         }
 
         return data
+
+class TicketSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Ticket
+        fields = "__all__"
