@@ -13,6 +13,8 @@ export default function ManualTestCard() {
             humidity: hum
         }
     try {
+      setTemp("");
+      setHum("");
       const newMeasurement = await createMeasurement(data);
     } catch (err) {
       console.error("Erreur lors de l'envoi :", err);

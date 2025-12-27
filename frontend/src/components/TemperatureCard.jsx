@@ -1,6 +1,6 @@
 // components/TemperatureCard.jsx
 import { useEffect, useState } from "react";
-import { fetchAllMeasurements } from "../api/sensorApi";
+import { fetchLatestMeasurement } from "../api/sensorApi";
 import DashboardCard from "./Card/DashboardCard";
 import { useNavigate } from "react-router-dom";
 import { timeAgo } from "../utils/timeAgo";
@@ -11,8 +11,8 @@ export default function TemperatureCard() {
 
     useEffect(() => {
         const load = async () => {
-            const data = await fetchAllMeasurements(); 
-            setLatest(data[data.length - 1]);
+            const data = await fetchLatestMeasurement();
+            setLatest(data);
         };
 
         load();

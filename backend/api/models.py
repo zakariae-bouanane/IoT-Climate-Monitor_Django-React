@@ -52,6 +52,29 @@ class Measurement(models.Model):
 
     def __str__(self):
         return f"Sensor {self.sensor.sensor_id}: {self.temperature}°C / {self.humidity}%"
+# models.py
+
+class IncidentAcknowledgement(models.Model):
+    LEVEL_CHOICES = [
+        ("USER", "User"),
+        ("MANAGER", "Manager"),
+        ("SUPERVISOR", "Supervisor"),
+    ]
+
+    measurement = models.ForeignKey(
+        Measurement,
+        on_delete=models.CASCADE,
+        related_name="acknowledgements"
+    )
+
+    level = models.CharField(max_length=20, choices=LEVEL_CHOICES)
+    acknowledged = models.BooleanField(default=False)
+    comment = models.TextField(blank=True, null=True)
+
+    acknowledged_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ("measurement", "level")
 
 
 class AuditLog(models.Model):

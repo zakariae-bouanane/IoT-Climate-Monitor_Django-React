@@ -11,6 +11,17 @@ export async function fetchAllMeasurements() {
     return res.data; 
 }
 
+export async function fetchLatestMeasurement(sensorId = 1) {
+    const res = await axiosInstance.get(
+        `${API_URL}/measurements/latest/`,
+        {
+            params: { sensor: sensorId }
+        }
+    );
+
+    return res.data;
+}
+
 export async function fetchMeasurements(sensorId = 1) {
   try {
     const res = await axiosInstance.get(`${API_URL}/measurements/`, {

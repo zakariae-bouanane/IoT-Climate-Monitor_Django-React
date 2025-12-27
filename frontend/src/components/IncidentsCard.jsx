@@ -1,8 +1,10 @@
 // components/IncidentsCard.jsx
 import { useEffect, useState } from "react";
-import { fetchMeasurements, fetchFirstSensor } from "../api/sensorApi";
+import { fetchFirstSensor, fetchLatestMeasurement } from "../api/sensorApi";
 import DashboardCard from "./Card/DashboardCard";
+import IncidentValidation from "./IncidentValidation";
 import { useNavigate } from "react-router-dom";
+import { getCurrentUser } from "../api/authApi";
 
 export default function IncidentsCard() {
     const [latest, setLatest] = useState(null);
@@ -10,19 +12,19 @@ export default function IncidentsCard() {
     const [isIncident, setIsIncident] = useState(false);
     const [MIN_TEMP, setMIN_TEMP] = useState(2);
     const [MAX_TEMP, setMAX_TEMP] = useState(31);
+    const [currentUser, setCurrentUser] = useState(null);
     const navigate = useNavigate();
 
     useEffect(() => {
+        setCurrentUser(getCurrentUser());
         const load = async () => {
             const sensorData = await fetchFirstSensor();
             setSensor(sensorData);
             setMIN_TEMP(sensorData.min_temp);
             setMAX_TEMP(sensorData.max_temp);
-            const data = await fetchMeasurements();
+            const last = await fetchLatestMeasurement();
             
-            if(data?.length){
-                const last = data[data.length - 1];
-
+            if(last){
                 setLatest(last);
 
                 // Determine incident status
@@ -61,6 +63,14 @@ export default function IncidentsCard() {
         <button onClick={() => navigate("/incidents/history")}>
             Voir les événements
         </button>
+
+        {latest?.status === "ALERT" && (
+            <IncidentValidation
+                measurementId={latest.id}
+                userRole={currentUser.role} // USER | MANAGER | SUPERVISOR
+            />
+        )}
+
         </DashboardCard>
     );
 }

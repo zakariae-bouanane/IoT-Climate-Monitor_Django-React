@@ -25,7 +25,8 @@ export default function Dashboard() {
     const canManageUsers = role === "manager" || role === "supervisor";
     const canManageSensors = role === "supervisor";
     const canViewAuditLogs = role === "manager" || role === "supervisor";
-    const canManageTickets = role === "manager" || role === "supervisor";
+    // const canManageTickets = role === "manager" || role === "supervisor";
+    const canManageTickets = false;
 
     return (
   <div style={styles.container}>

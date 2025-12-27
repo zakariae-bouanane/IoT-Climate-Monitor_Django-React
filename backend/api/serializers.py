@@ -6,7 +6,7 @@ from .utils import send_alert_notification
 from .audit import create_audit
 from .escalation import escalation_process
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from .models import Profile, Ticket
+from .models import Profile, Ticket, IncidentAcknowledgement
 
 
 class DHT11serialize(serializers.ModelSerializer) :
@@ -96,6 +96,11 @@ class MeasurementSerializer(serializers.ModelSerializer):
         if measurement.temperature < sensor.min_temp or measurement.temperature > sensor.max_temp:
             measurement.status = "ALERT"
             measurement.save()
+            for level in ["USER", "MANAGER", "SUPERVISOR"]:
+                IncidentAcknowledgement.objects.get_or_create(
+                    measurement=measurement,
+                    level=level
+                )
             create_audit(
                 action="ALERT_TRIGGERED",
                 sensor=sensor,
@@ -105,7 +110,7 @@ class MeasurementSerializer(serializers.ModelSerializer):
             # Notifications et escalade
             escalation_process(sensor, measurement)
 
-            # 🔥 Créer un ticket seulement s'il n'y en a pas déjà un ouvert pour ce sensor
+            # Créer un ticket seulement s'il n'y en a pas déjà un ouvert pour ce sensor
             existing_ticket = Ticket.objects.filter(
                 sensor=sensor,
                 status__in=["OPEN", "ASSIGNED"]
@@ -128,6 +133,12 @@ class MeasurementSerializer(serializers.ModelSerializer):
             sensor.save()
 
         return measurement
+
+class IncidentAcknowledgementSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = IncidentAcknowledgement
+        fields = "__all__"
+        read_only_fields = ["id", "acknowledged_at"]
 
 
 class AuditLogSerializer(serializers.ModelSerializer):

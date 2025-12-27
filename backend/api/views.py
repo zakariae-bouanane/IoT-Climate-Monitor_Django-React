@@ -12,8 +12,8 @@ from django.contrib.auth.models import User
 from rest_framework.viewsets import ModelViewSet
 from rest_framework import viewsets, status
 from rest_framework.response import Response
-from .models import Sensor, Measurement, AuditLog, User, Ticket
-from .serializers import SensorSerializer, MeasurementSerializer, AuditLogSerializer, CustomTokenObtainPairSerializer, UserSerializer, TicketSerializer
+from .models import Sensor, Measurement, AuditLog, User, Ticket, IncidentAcknowledgement
+from .serializers import SensorSerializer, MeasurementSerializer, AuditLogSerializer, CustomTokenObtainPairSerializer, UserSerializer, TicketSerializer, IncidentAcknowledgementSerializer
 from rest_framework.decorators import action, api_view, permission_classes
 from django.utils.dateparse import parse_datetime
 from django.utils import timezone
@@ -67,6 +67,86 @@ def measurement_list(request):
             serializer.save()
             return Response(serializer.data, status=201)
         return Response(serializer.errors, status=400)
+
+@api_view(['GET'])
+def measurement_latest(request):
+    sensor_id = request.query_params.get("sensor")
+
+    qs = Measurement.objects.all().select_related("sensor")
+
+    if sensor_id:
+        qs = qs.filter(sensor__sensor_id=sensor_id)
+
+    latest_measurement = qs.order_by("-timestamp").first()
+
+    if not latest_measurement:
+        return Response(
+            {"message": "Aucune mesure trouvée"},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    serializer = MeasurementSerializer(latest_measurement)
+    return Response(serializer.data)
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def incident_acknowledgement(request, measurement_id):
+    user_role = request.user.profile.role.upper()
+
+    role_visibility = {
+        "USER": ["USER"],
+        "MANAGER": ["USER", "MANAGER"],
+        "SUPERVISOR": ["USER", "MANAGER", "SUPERVISOR"],
+    }
+
+    allowed_levels = role_visibility.get(user_role, [])
+
+    acks = IncidentAcknowledgement.objects.filter(
+        measurement_id=measurement_id,
+        level__in=allowed_levels
+    ).order_by("level")
+
+    serializer = IncidentAcknowledgementSerializer(acks, many=True)
+    return Response(serializer.data)
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def acknowledge_incident(request, measurement_id):
+    user = request.user
+    level = request.data.get("level")
+    comment = request.data.get("comment", "").strip()
+
+    if not level:
+        return Response({"error": "level requis"}, status=400)
+
+    user_role = user.profile.role.upper()
+
+    if user_role != level:
+        return Response(
+            {"error": "Vous ne pouvez valider que votre niveau"},
+            status=403
+        )
+
+    ack = get_object_or_404(
+        IncidentAcknowledgement,
+        measurement_id=measurement_id,
+        level=level
+    )
+
+    if ack.acknowledged:
+        return Response(
+            {"error": "Déjà validé"},
+            status=400
+        )
+
+    ack.acknowledged = True
+    ack.comment = comment
+    ack.acknowledged_at = timezone.now()
+    ack.save()
+
+    return Response({
+        "message": "Validation enregistrée",
+        "comment": ack.comment
+    })
 
 
 def test(request):

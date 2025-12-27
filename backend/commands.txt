@@ -23,3 +23,7 @@ python manage.py creatsuperuser
 creation d'un utilisateur :
 
 python manage.py createsuperuser
+
+
+start react :
+npm run start
